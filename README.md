@@ -6,6 +6,47 @@ standalone Node.js server), `apps/frontend` is a Vue 3 + Vuetify 4 client that t
 Hono RPC (typed request/response, no hand-shared types package), and `packages/utils` holds
 runtime-agnostic code shared by both.
 
+## Setting Up a New Project
+
+This repo is a template. To start a new project from it:
+
+1. Clone it under the new project's name:
+
+```bash
+git clone https://github.com/kouki-miura2/fullstack-typescript.git my-new-project
+cd my-new-project
+```
+
+2. Point it at the new project's own remote instead of this template's:
+
+```bash
+rm -rf .git
+git init
+git remote add origin <new-project-repo-url>
+```
+
+3. Rename the project in the files that hard-code the template's name:
+
+- Root `package.json` — `name`
+- `apps/backend/wrangler.jsonc` — `name` (the deployed Cloudflare Worker's name)
+- `apps/frontend/index.html` — `<title>`
+- `README.md` — title and description (this file)
+
+4. Install dependencies and confirm everything works:
+
+```bash
+vp install
+vp run ready
+```
+
+5. Commit the result and push to the new remote:
+
+```bash
+git add -A
+git commit -m "chore: initial commit from fs-ts template"
+git push -u origin main
+```
+
 ## Development
 
 - Check everything is ready:
