@@ -1,9 +1,10 @@
 # Vite+ Monorepo Starter
 
 A starter for creating a Vite+ monorepo, with `apps/backend`, `apps/frontend`, and
-`packages/utils`. `apps/backend` is a Hono API (deployable to Cloudflare Workers or as a
-standalone Node.js server), `apps/frontend` is a Vue 3 + Vuetify 4 client that talks to it through
-Hono RPC (typed request/response, no hand-shared types package), and `packages/utils` holds
+`packages/utils`. `apps/backend` is a runtime-agnostic Hono API, run on Cloudflare Workers by
+`apps/backend-worker` or as a standalone Node.js server by `apps/backend-node` (a project keeps
+one of the two). `apps/frontend` is a Vue 3 + Vuetify 4 client that talks to it through Hono RPC
+(typed request/response, no hand-shared types package), and `packages/utils` holds
 runtime-agnostic code shared by both.
 
 ## Setting Up a New Project
@@ -19,31 +20,81 @@ cd my-new-project
 
 2. Point it at the new project's own remote instead of this template's:
 
+macOS / Linux (or Git Bash on Windows):
+
 ```bash
 rm -rf .git
 git init
 git remote add origin <new-project-repo-url>
 ```
 
-3. Rename the project in the files that hard-code the template's name:
+Windows (PowerShell):
+
+```powershell
+Remove-Item -Recurse -Force .git
+git init
+git remote add origin <new-project-repo-url>
+```
+
+3. Choose the backend runtime and delete the other one. Routes and business logic live in
+   `apps/backend` either way; only the entrypoint package differs.
+
+**Cloudflare Workers** — delete `apps/backend-node`:
+
+```bash
+rm -rf apps/backend-node                          # PowerShell: Remove-Item -Recurse -Force apps/backend-node
+```
+
+- Root `AGENTS.md` — remove the `apps/backend-node` line
+- `README.md` — remove the `apps/backend-node` section (this file)
+
+**Node.js** — delete `apps/backend-worker`:
+
+```bash
+rm -rf apps/backend-worker                        # PowerShell: Remove-Item -Recurse -Force apps/backend-worker
+```
+
+- `.claude/agents/cloudflare-deployer.md` — delete (Workers-only deploy agent)
+- `pnpm-workspace.yaml` — remove `workerd: true` from `allowBuilds`
+- Root `package.json` — change `dev-b` to `vp run backend-node#dev`
+- Root `AGENTS.md` — remove the `apps/backend-worker` line
+- `README.md` — remove the `apps/backend-worker` section (this file)
+
+Then update the lockfile and check nothing still refers to the deleted runtime:
+
+```bash
+vp install
+git grep -n -i -e backend-node -- ':!README.md' ':!.claude/skills/check-secrets'                          # kept Cloudflare Workers
+git grep -n -i -e backend-worker -e wrangler -e workerd -- ':!README.md' ':!.claude/skills/check-secrets' # kept Node.js
+```
+
+(`.claude/skills/check-secrets` covers both runtimes conditionally, so it stays either way.)
+
+4. Rename the project:
 
 - Root `package.json` — `name`
-- `apps/backend/wrangler.jsonc` — `name` (the deployed Cloudflare Worker's name)
-- `apps/frontend/index.html` — `<title>`
+- `apps/frontend/.env` — `VITE_APP_TITLE` (browser tab title and app bar)
+- `apps/backend-worker/wrangler.jsonc` — `name` if you kept Cloudflare Workers (the Worker's name; must be unique per account, or deploys overwrite each other)
 - `README.md` — title and description (this file)
 
-4. Install dependencies and confirm everything works:
+Then check nothing still refers to the template:
+
+```bash
+git grep -n -i fullstack-typescript -- ':!README.md'
+```
+
+5. Install dependencies and confirm everything works:
 
 ```bash
 vp install
 vp run ready
 ```
 
-5. Commit the result and push to the new remote:
+6. Commit the result and push to the new remote:
 
 ```bash
 git add -A
-git commit -m "chore: initial commit from fs-ts template"
+git commit -m "chore: initial commit from fullstack-typescript template"
 git push -u origin main
 ```
 
@@ -83,11 +134,7 @@ vp run utils#test
 
 ## apps/backend
 
-Deployable to Cloudflare Workers or as a standalone Node.js server. Pick the runtime section(s) a given project needs.
-
-Script naming: no suffix = common (runtime-agnostic) or Cloudflare Workers, `:node` suffix = Node.js.
-
-### Common
+Runtime-agnostic routes and business logic. Run it through `apps/backend-worker` or `apps/backend-node`.
 
 - Run format/lint/type checks:
 
@@ -101,50 +148,54 @@ vp run backend#check
 vp run backend#test
 ```
 
-### Cloudflare Workers
+## apps/backend-worker
 
-- Debug locally:
+Runs `apps/backend` on Cloudflare Workers.
+
+- Debug locally (reloads on changes in `apps/backend` too):
 
 ```bash
-vp run backend#dev
+vp run backend-worker#dev
 ```
 
 - Build (dry-run bundle):
 
 ```bash
-vp run backend#build
+vp run backend-worker#build
 ```
 
 - Deploy:
 
 ```bash
-vp run backend#deploy
+vp run backend-worker#deploy
 ```
 
 - Regenerate Workers binding types:
 
 ```bash
-vp run backend#cf-typegen
+vp run backend-worker#cf-typegen
 ```
 
-### Node.js
+## apps/backend-node
 
-- Debug locally (hot reload):
+Runs `apps/backend` as a standalone Node.js server.
+
+- Debug locally (reloads on changes in `apps/backend` too):
 
 ```bash
-vp run backend#dev:node
+vp run backend-node#dev
 ```
 
 - Build:
 
 ```bash
-vp run backend#build:node
+vp run backend-node#build
 ```
 
 - Run the built bundle:
 
 ```bash
-vp run backend#start:node
+vp run backend-node#start
 ```
 
 ## apps/frontend

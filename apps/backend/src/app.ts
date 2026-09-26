@@ -26,7 +26,7 @@ const generateRequestId = (): string =>
     byte.toString(16).padStart(2, '0'),
   ).join('')
 
-/** Runtime-agnostic app: no Cloudflare Workers or Node-specific APIs here. See `worker.ts` / `server.ts` for entrypoints. */
+/** Runtime-agnostic app: no Cloudflare Workers or Node-specific APIs here. Entrypoints live in the runtime package (`apps/backend-*`). */
 export const createApp = (deps: AppDependencies) => {
   const logger = createLogger({ format: 'json' })
 
@@ -67,7 +67,7 @@ export const createApp = (deps: AppDependencies) => {
         await next()
       })
       // Reference implementation of one endpoint through the app -> service -> repository -> dao
-      // layering: `worker.ts` / `server.ts` wire the concrete dependencies, this route only talks
+      // layering: the runtime entrypoints wire the concrete dependencies, this route only talks
       // to `SampleService`. Build real routes the same way, then delete this route and the
       // `service/sample.*`, `repository/sample.*`, `dao/sample.*` files once they're not needed
       // as a reference anymore.

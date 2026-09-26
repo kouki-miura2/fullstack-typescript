@@ -5,7 +5,7 @@ const records: SampleRecord[] = [
   { id: '2', label: 'Second sample record' },
 ]
 
-/** Default in-memory `SampleDao`. Projects add real DAOs (e.g. `*.d1.ts`, `*.node-pg.ts`) alongside this file. */
+/** Default in-memory `SampleDao`. Projects add datastore-backed DAOs in the runtime package's `src/dao/`. */
 export const createSampleDao = (): SampleDao => ({
   findById: async (id) => records.find((record) => record.id === id) ?? null,
 })

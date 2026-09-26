@@ -10,7 +10,8 @@ description: Add a new API endpoint to apps/backend, following the app.ts -> ser
 ```
 route (src/app.ts) -> service (src/service/*.service.ts)
                     -> repository (src/repository/*.repository.ts)
-                    -> dao (src/dao/*.interface.ts + *.memory.ts / *.d1.ts / *.node-pg.ts / ...)
+                    -> dao (src/dao/*.interface.ts + *.memory.ts;
+                            datastore-backed DAOs in the runtime package)
 ```
 
 - A **route** depends only on a service. No business logic or datastore access in `app.ts`.
@@ -19,8 +20,7 @@ route (src/app.ts) -> service (src/service/*.service.ts)
 - A **repository** maps a DAO's raw storage shape to a domain entity. No datastore access here
   either — that's the DAO's job.
 - A **dao** is the only layer that talks to a datastore, behind an interface, so different
-  runtimes (Workers vs Node) can swap in different concrete DAOs without touching
-  service/repository/route code.
+  runtime packages (`apps/backend-*`) can wire in their own concrete DAOs without touching service/repository/route code.
 
 `src/{service,repository,dao}/sample.*`, wired to `GET /sample/:id` in `src/app.ts`, is a worked
 reference for this exact chain. Read it before starting, and copy its shape rather than inventing
@@ -36,9 +36,9 @@ scheme.
 
 - `src/dao/<name>.interface.ts` — the raw storage type (`<Name>Record`) and the `<Name>Dao`
   interface (the methods this endpoint needs, e.g. `findById`).
-- `src/dao/<name>.memory.ts` — a concrete in-memory implementation (`create<Name>Dao`). Add a
-  real implementation (`.d1.ts`, `.node-pg.ts`, ...) alongside it when/if a real datastore is
-  needed.
+- `src/dao/<name>.memory.ts` — a concrete in-memory implementation (`create<Name>Dao`). When/if
+  a real datastore is needed, add its implementation in the runtime package, not here
+  (`apps/backend-*/src/dao/<name>.<datastore>.ts`; see that package's `AGENTS.md`).
 - `src/dao/<name>.memory.test.ts` — co-located test for the concrete DAO (see `sample.memory.test.ts`).
 
 ### 2. Repository layer
@@ -70,9 +70,9 @@ scheme.
 
 ### 5. Wire real dependencies
 
-- Update `src/worker.ts` and/or `src/server.ts` (whichever runtime(s) this project deploys) to
-  construct the real dao -> repository -> service chain and pass it into `createApp`, the same
-  way they already do for `sampleService`.
+- Update the runtime package's entrypoint (in `apps/backend-*/src/`) to construct the real
+  dao -> repository -> service chain and pass it into `createApp`, the same way it already does
+  for `sampleService`.
 
 ### 6. Validate
 

@@ -196,9 +196,6 @@ importers:
 
   apps/backend:
     dependencies:
-      '@hono/node-server':
-        specifier: ^2.1.1
-        version: 2.1.1(hono@4.13.8)
       hono:
         specifier: ^4.13.7
         version: 4.13.8
@@ -209,15 +206,44 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.13.6
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+
+  apps/backend-node:
+    dependencies:
+      '@hono/node-server':
+        specifier: ^2.1.1
+        version: 2.1.1(hono@4.13.8)
+      backend:
+        specifier: workspace:*
+        version: link:../backend
+      hono:
+        specifier: ^4.13.7
+        version: 4.13.8
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.13.6
       tsx:
         specifier: ^4.23.14
         version: 4.23.14
       typescript:
         specifier: 'catalog:'
         version: 7.0.2
+
+  apps/backend-worker:
+    dependencies:
+      backend:
+        specifier: workspace:*
+        version: link:../backend
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
       wrangler:
         specifier: ^4.131.1
-        version: 4.135.0(@types/node@24.13.6)
+        version: 4.135.0(@types/node@26.6.2)
 
   apps/frontend:
     dependencies:
@@ -3418,10 +3444,10 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  miniflare@5.20260918.0-alpha(@types/node@24.13.6):
+  miniflare@5.20260918.0-alpha(@types/node@26.6.2):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
-      sharp: 0.35.4(@types/node@24.13.6)
+      sharp: 0.35.4(@types/node@26.6.2)
       undici: 7.29.0
       workerd: 1.20260918.1
       ws: 8.21.0
@@ -3664,7 +3690,7 @@ snapshots:
 
   semver@7.8.5: {}
 
-  sharp@0.35.4(@types/node@24.13.6):
+  sharp@0.35.4(@types/node@26.6.2):
     dependencies:
       '@img/colour': 1.1.0
       detect-libc: 2.1.2
@@ -3695,7 +3721,7 @@ snapshots:
       '@img/sharp-win32-arm64': 0.35.4
       '@img/sharp-win32-ia32': 0.35.4
       '@img/sharp-win32-x64': 0.35.4
-      '@types/node': 24.13.6
+      '@types/node': 26.6.2
 
   siginfo@2.0.0: {}
 
@@ -4146,13 +4172,13 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20260918.1
       '@cloudflare/workerd-windows-64': 1.20260918.1
 
-  wrangler@4.135.0(@types/node@24.13.6):
+  wrangler@4.135.0(@types/node@26.6.2):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
       '@cloudflare/unenv-preset': 2.16.1(unenv@2.0.0-rc.24)(workerd@1.20260918.1)
       blake3-wasm: 2.1.5
       esbuild: 0.28.1
-      miniflare: 5.20260918.0-alpha(@types/node@24.13.6)
+      miniflare: 5.20260918.0-alpha(@types/node@26.6.2)
       path-to-regexp: 6.3.0
       unenv: 2.0.0-rc.24
       workerd: 1.20260918.1

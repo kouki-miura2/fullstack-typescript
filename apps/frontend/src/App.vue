@@ -2,11 +2,12 @@
 import { useNotificationStore } from './stores/notification.ts'
 
 const notification = useNotificationStore()
+const appTitle = import.meta.env.VITE_APP_TITLE
 </script>
 
 <template>
   <v-app>
-    <v-app-bar title="fs-ts">
+    <v-app-bar :title="appTitle">
       <template #append>
         <v-btn to="/" text="Home" />
         <v-btn to="/sample" text="Sample" />

@@ -1,11 +1,10 @@
 /// <reference types="node" />
 import { serve } from '@hono/node-server'
-
-import { createApp } from './app.ts'
-import { createSampleDao } from './dao/sample.memory.ts'
-import { createAuthGuard } from './repository/auth-guard.header.ts'
-import { createSampleRepository } from './repository/sample.repository.ts'
-import { createSampleService } from './service/sample.service.ts'
+import { createApp } from 'backend/src/app.ts'
+import { createSampleDao } from 'backend/src/dao/sample.memory.ts'
+import { createAuthGuard } from 'backend/src/repository/auth-guard.header.ts'
+import { createSampleRepository } from 'backend/src/repository/sample.repository.ts'
+import { createSampleService } from 'backend/src/service/sample.service.ts'
 
 const app = createApp({
   sampleService: createSampleService(createSampleRepository(createSampleDao())),

@@ -1,0 +1,22 @@
+{
+  "name": "backend-node",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "vp build --ssr src/server.ts --outDir dist",
+    "start": "node dist/server.js",
+    "check": "vp check"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.1",
+    "backend": "workspace:*",
+    "hono": "^4.13.7"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "tsx": "^4.23.14",
+    "typescript": "catalog:"
+  }
+}
