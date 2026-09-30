@@ -11,7 +11,7 @@ export const useSampleQuery = (id: MaybeRefOrGetter<string>, queryClient?: Query
     {
       queryKey: ['sample', id],
       queryFn: async () => {
-        const res = await apiClient.sample[':id'].$get({ param: { id: toValue(id) } })
+        const res = await apiClient.api.sample[':id'].$get({ param: { id: toValue(id) } })
         if (!res.ok) throw new Error(`Request failed: ${res.status}`)
         return res.json()
       },

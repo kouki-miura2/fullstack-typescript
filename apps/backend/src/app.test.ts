@@ -10,24 +10,24 @@ const sampleService: SampleService = {
 const allowAllGuard: AuthGuard = { authenticate: async () => ({ id: 'test-user' }) }
 const denyAllGuard: AuthGuard = { authenticate: async () => null }
 
-test('GET /sample/:id returns the service response when the auth guard is disabled', async () => {
+test('GET /api/sample/:id returns the service response when the auth guard is disabled', async () => {
   const app = createApp({
     sampleService,
     auth: { guard: denyAllGuard, enabled: false, excludePaths: [] },
   })
 
-  const res = await app.request('/sample/1')
+  const res = await app.request('/api/sample/1')
 
   expect(await res.json()).toEqual({ id: '1', message: 'Sample "First sample record"' })
 })
 
-test('GET /sample/:id returns 404 for an unknown id', async () => {
+test('GET /api/sample/:id returns 404 for an unknown id', async () => {
   const app = createApp({
     sampleService,
     auth: { guard: denyAllGuard, enabled: false, excludePaths: [] },
   })
 
-  const res = await app.request('/sample/missing')
+  const res = await app.request('/api/sample/missing')
 
   expect(res.status).toBe(404)
 })
@@ -38,7 +38,7 @@ test('rejects unauthenticated requests once the auth guard is enabled', async ()
     auth: { guard: denyAllGuard, enabled: true, excludePaths: [] },
   })
 
-  const res = await app.request('/sample/1')
+  const res = await app.request('/api/sample/1')
 
   expect(res.status).toBe(401)
 })
@@ -49,7 +49,7 @@ test('allows authenticated requests once the auth guard is enabled', async () =>
     auth: { guard: allowAllGuard, enabled: true, excludePaths: [] },
   })
 
-  const res = await app.request('/sample/1', { headers: { authorization: 'token' } })
+  const res = await app.request('/api/sample/1', { headers: { authorization: 'token' } })
 
   expect(await res.json()).toEqual({ id: '1', message: 'Sample "First sample record"' })
 })
@@ -57,10 +57,10 @@ test('allows authenticated requests once the auth guard is enabled', async () =>
 test('keeps excluded paths free access even when the auth guard is enabled', async () => {
   const app = createApp({
     sampleService,
-    auth: { guard: denyAllGuard, enabled: true, excludePaths: ['/sample/1'] },
+    auth: { guard: denyAllGuard, enabled: true, excludePaths: ['/api/sample/1'] },
   })
 
-  const res = await app.request('/sample/1')
+  const res = await app.request('/api/sample/1')
 
   expect(await res.json()).toEqual({ id: '1', message: 'Sample "First sample record"' })
 })
@@ -72,7 +72,7 @@ test('logs a matching started/completed pair, including for a rejected request',
     auth: { guard: denyAllGuard, enabled: true, excludePaths: [] },
   })
 
-  const res = await app.request('/sample/1')
+  const res = await app.request('/api/sample/1')
   expect(res.status).toBe(401)
 
   expect(info).toHaveBeenCalledTimes(2)
@@ -84,12 +84,12 @@ test('logs a matching started/completed pair, including for a rejected request',
   expect(started).toMatchObject({
     message: 'request started',
     method: 'GET',
-    path: '/sample/1',
+    path: '/api/sample/1',
   })
   expect(completed).toMatchObject({
     message: 'request completed',
     method: 'GET',
-    path: '/sample/1',
+    path: '/api/sample/1',
     user: 'anonymous',
     status: 401,
   })

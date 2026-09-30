@@ -15,6 +15,7 @@ Monorepo managed with pnpm workspaces (`apps/*`, `packages/*`). Project-specific
 - Co-location: `foo/bar.ts` + `foo/bar.test.ts`.
 - Arrow functions everywhere (`const foo = (...) => {}`), no `function` declarations — one style repo-wide, including `packages/utils`, so there's no per-case judgment call.
 - Favor less code: reach for a framework's built-in feature over a hand-rolled one, avoid speculative abstractions and shared packages "just in case", and don't introduce a layer until it earns its keep.
+- One origin in development and production: the frontend at `/`, the API at `/api`. In development `vp run frontend#dev` proxies `/api` to the backend dev server (`localhost:8787`); in production the runtime package serves both (see its `AGENTS.md`).
 - API request/response types are not hand-shared: `apps/frontend` gets them from `apps/backend` via Hono RPC, not from a separate types package.
 - Runtime-agnostic shared code goes in `packages/utils`, not duplicated per app.
 

@@ -63,7 +63,9 @@ scheme.
 
 - Add the new dependency to `AppDependencies` (e.g. `<name>Service: <Name>Service`).
 - Add the route inside `createApp(...)`, calling only the service and translating its result to
-  an HTTP response (status code, JSON body). No business logic in the route itself.
+  an HTTP response (status code, JSON body). No business logic in the route itself. Route paths
+  are written without the `/api` prefix (`basePath('/api')` adds it), but requests in tests and
+  `auth.excludePaths` entries use the full path (`/api/<name>/...`).
 - Extend `src/app.test.ts` (already co-located with `app.ts`) with cases for the new route, using
   a hand-written fake `<Name>Service` — covering the success path, the "not found"/error path, and
   auth guard interaction if the route isn't excluded from it.

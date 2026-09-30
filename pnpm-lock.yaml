@@ -228,6 +228,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.19.0
+      frontend:
+        specifier: workspace:*
+        version: link:../frontend
       tsx:
         specifier: ^4.23.14
         version: 4.23.15
@@ -241,6 +244,9 @@ importers:
         specifier: workspace:*
         version: link:../backend
     devDependencies:
+      frontend:
+        specifier: workspace:*
+        version: link:../frontend
       typescript:
         specifier: 'catalog:'
         version: 7.0.2

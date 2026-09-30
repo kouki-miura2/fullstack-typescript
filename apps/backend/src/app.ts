@@ -1,5 +1,4 @@
 import { Hono } from 'hono'
-import { cors } from 'hono/cors'
 import { createLogger } from 'utils'
 
 import type { AuthGuard, AuthenticatedUser } from './repository/auth-guard.interface.ts'
@@ -32,7 +31,8 @@ export const createApp = (deps: AppDependencies) => {
 
   return (
     new Hono<{ Variables: Variables }>()
-      .use('*', cors())
+      // Served under /api on the same origin as the frontend (Vite proxies it in dev), so no CORS.
+      .basePath('/api')
       // Audit trail: start/end pair per request, joined by requestId (needed since concurrent
       // requests to the same method+path would otherwise be indistinguishable in the log stream).
       // Wraps the auth guard so a rejected (401) request is still logged, not just successful ones.

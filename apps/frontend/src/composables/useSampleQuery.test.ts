@@ -3,15 +3,15 @@ import { afterEach, expect, test, vi } from 'vite-plus/test'
 import { effectScope } from 'vue'
 
 vi.mock('../api/client.ts', () => ({
-  apiClient: { sample: { ':id': { $get: vi.fn() } } },
+  apiClient: { api: { sample: { ':id': { $get: vi.fn() } } } },
 }))
 
 import { apiClient } from '../api/client.ts'
 import { useSampleQuery } from './useSampleQuery.ts'
 
-type SampleResponse = Awaited<ReturnType<(typeof apiClient.sample)[':id']['$get']>>
+type SampleResponse = Awaited<ReturnType<(typeof apiClient.api.sample)[':id']['$get']>>
 
-const mockedGet = vi.mocked(apiClient.sample[':id'].$get)
+const mockedGet = vi.mocked(apiClient.api.sample[':id'].$get)
 
 /** Runs the composable inside its own effect scope, mirroring the lifetime it'd have in a component. */
 const runSampleQuery = (id: string) => {

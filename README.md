@@ -64,11 +64,11 @@ Then update the lockfile and check nothing still refers to the deleted runtime:
 
 ```bash
 vp install
-git grep -n -i -e backend-node -- ':!README.md' ':!.claude/skills/check-secrets'                          # kept Cloudflare Workers
-git grep -n -i -e backend-worker -e wrangler -e workerd -- ':!README.md' ':!.claude/skills/check-secrets' # kept Node.js
+git grep -n -i -e backend-node -- ':!README.md' ':!.claude/skills/check-secrets' ':!.claude/agents/web-security-auditor.md'                          # kept Cloudflare Workers
+git grep -n -i -e backend-worker -e wrangler -e workerd -- ':!README.md' ':!.claude/skills/check-secrets' ':!.claude/agents/web-security-auditor.md' # kept Node.js
 ```
 
-(`.claude/skills/check-secrets` covers both runtimes conditionally, so it stays either way.)
+(`.claude/skills/check-secrets` and `.claude/agents/web-security-auditor.md` cover both runtimes conditionally, so they stay either way.)
 
 4. Rename the project:
 
@@ -99,6 +99,20 @@ git push -u origin main
 ```
 
 ## Development
+
+The frontend is served at `/` and the API at `/api` on the same origin, in development and in
+production. Run both dev servers and open the frontend's URL; it proxies `/api` to the backend
+(`localhost:8787`):
+
+```bash
+vp run dev-b   # backend
+vp run dev-f   # frontend
+```
+
+In production, the backend runtime serves both: the Worker (`apps/backend-worker`) serves the
+frontend build as static assets, and the Node.js server (`apps/backend-node`) serves it with
+`serveStatic`. Both list `frontend` as a workspace dependency, so `vp run -r build` (or `-t` for
+one package) builds the frontend once, before them; the Worker's `deploy` builds it itself.
 
 - Check everything is ready:
 
@@ -158,13 +172,13 @@ Runs `apps/backend` on Cloudflare Workers.
 vp run backend-worker#dev
 ```
 
-- Build (dry-run bundle):
+- Build (frontend + dry-run Worker bundle):
 
 ```bash
-vp run backend-worker#build
+vp run -t backend-worker#build
 ```
 
-- Deploy:
+- Deploy (frontend + API, one Worker):
 
 ```bash
 vp run backend-worker#deploy
@@ -186,13 +200,13 @@ Runs `apps/backend` as a standalone Node.js server.
 vp run backend-node#dev
 ```
 
-- Build:
+- Build (frontend + server bundle):
 
 ```bash
-vp run backend-node#build
+vp run -t backend-node#build
 ```
 
-- Run the built bundle:
+- Run the built bundle (frontend at `/`, API at `/api`, port from `PORT`):
 
 ```bash
 vp run backend-node#start

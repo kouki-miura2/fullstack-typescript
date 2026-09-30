@@ -18,7 +18,7 @@ Cloudflare, and Google specifically, plus generic credential shapes.
   (`git log -p origin/<branch>..HEAD`, or `git log -p --all` for a first push to a new remote).
 - **Before a deploy**: scan what's about to go live.
   - Cloudflare Workers (`apps/backend-worker`): `wrangler.jsonc` (especially `vars` and binding
-    blocks) and the bundle in `apps/backend-worker/dist` (`vp run backend-worker#build`).
+    blocks) and the bundle in `apps/backend-worker/dist` (`vp run -t backend-worker#build`).
   - Node.js (`apps/backend-node`): the bundle in `apps/backend-node/dist`.
   - Frontend: `apps/frontend/dist/**/*.{js,html}`. Every `VITE_*` value is inlined into the
     bundle and publicly downloadable — never rely on "it's just a build artifact" to keep it private.

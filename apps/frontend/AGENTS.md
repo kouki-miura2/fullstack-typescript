@@ -4,7 +4,7 @@
 - Vuetify 4 for UI components and theming.
 - vue-router for routing. The route table lives in `src/router/routes.ts`, separate from `src/router/index.ts` (which builds the actual `router` with `createWebHistory()`), so tests can import `routes` without pulling in a browser-only history.
 - TanStack Query (`@tanstack/vue-query`, `VueQueryPlugin` installed in `src/main.ts`) for server state — see State below.
-- API access goes through a Hono RPC client (`hc<AppType>()`), built from a type-only import of `apps/backend`'s `AppType`. This gives full request/response type inference without a shared types package or manually written DTOs.
+- API access goes through a Hono RPC client (`hc<AppType>()`), built from a type-only import of `apps/backend`'s `AppType`. This gives full request/response type inference without a shared types package or manually written DTOs. The API is same-origin under `/api` (client base `/`, so routes are `apiClient.api.*`); in dev, `vite.config.ts` proxies `/api` to the backend dev server on `localhost:8787`.
 - TypeScript is pinned to `^6.x` here, independent of the workspace catalog's `^7.x`: `vue-tsc`/Vue Language Tools can't type-check `.vue` SFCs against TypeScript 7's native compiler yet (no public Program API). Re-sync to the catalog once vue-tsc supports it.
 
 ## State
