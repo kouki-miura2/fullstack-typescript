@@ -70,9 +70,10 @@ git grep -n -i -e backend-worker -e wrangler -e workerd -- ':!README.md' ':!.cla
 
 (`.claude/skills/check-secrets` and `.claude/agents/web-security-auditor.md` cover both runtimes conditionally, so they stay either way.)
 
-4. Rename the project:
+4. Rename the project and set its time zone:
 
 - Root `package.json` — `name`
+- `packages/utils/src/date/zone.ts` — `TIME_ZONE_OFFSET_MINUTES` if the app's time zone isn't JST (UTC+9)
 - `apps/frontend/.env` — `VITE_APP_TITLE` (browser tab title and app bar)
 - `apps/backend-worker/wrangler.jsonc` — `name` if you kept Cloudflare Workers (the Worker's name; must be unique per account, or deploys overwrite each other)
 - `README.md` — title and description (this file)

@@ -8,7 +8,8 @@ Monorepo managed with pnpm workspaces (`apps/*`, `packages/*`). Project-specific
 - `apps/backend-worker` — Runs `apps/backend` on Cloudflare Workers. See `apps/backend-worker/AGENTS.md`.
 - `apps/backend-node` — Runs `apps/backend` as a standalone Node.js server. See `apps/backend-node/AGENTS.md`.
 - `apps/frontend` — Web client (Vue 3 + Vuetify 4). See `apps/frontend/AGENTS.md`.
-- `packages/utils` — Shared runtime utilities (date/time helpers, logger). See `packages/utils/AGENTS.md`.
+- `packages/utils` — Shared runtime utilities (app-wide limits, date/time helpers, character counting, logger). See `packages/utils/AGENTS.md`.
+- `docs/spec.md` — App specification (features, permissions, limits, architecture, data model). Read it before implementing or changing behavior, and keep it in sync when the behavior changes.
 
 ## Conventions
 
