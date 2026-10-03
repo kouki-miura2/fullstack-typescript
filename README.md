@@ -96,6 +96,7 @@ vp run ready
 ```bash
 git add -A
 git commit -m "chore: initial commit from fullstack-typescript template"
+git branch -M main
 git push -u origin main
 ```
 
