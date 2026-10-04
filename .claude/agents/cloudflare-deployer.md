@@ -43,6 +43,9 @@ doubt, ask rather than deploy.
    at the template's default — deploying under a name another project already uses in the same
    account overwrites that Worker), and any bindings it references exist. If something looks
    wrong, ask; don't invent values.
+   Also compare the commented-out `VITE_*` names in `apps/frontend/.env` with `apps/frontend/.env.local`:
+   if one is unset, the build ships its fallback (e.g. a disabled sign-in button, or `（運営者名）` in
+   the terms). Say which ones and ask before deploying.
 3. Validate: `vp run ready` (format, lint, type check, tests, and builds). Don't deploy a failing
    build.
 4. Build what will ship: `vp run -t backend-worker#build` (builds the frontend into

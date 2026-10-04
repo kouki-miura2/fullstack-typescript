@@ -19,6 +19,39 @@ Monorepo managed with pnpm workspaces (`apps/*`, `packages/*`). Project-specific
 - One origin in development and production: the frontend at `/`, the API at `/api`. In development `vp run frontend#dev` proxies `/api` to the backend dev server (`localhost:8787`); in production the runtime package serves both (see its `AGENTS.md`).
 - API request/response types are not hand-shared: `apps/frontend` gets them from `apps/backend` via Hono RPC, not from a separate types package.
 - Runtime-agnostic shared code goes in `packages/utils`, not duplicated per app.
+- Committing goes through the `github-committer` agent. When delegating to it, include in the task prompt the `Co-Authored-By:` trailer line from your own attribution reminder, verbatim, so the commit credits the model the user is working with rather than the subagent's.
+
+### Public config values for the frontend
+
+Values that aren't secret but differ per environment (e.g. a Google OAuth web client ID, a VAPID public key, the operator's name in the terms) reach the frontend as build-time env vars (`import.meta.env.VITE_*`). Don't add an API that returns config values (e.g. `GET /api/config`).
+
+- Put environment-specific values in `apps/frontend/.env.local` (gitignored). `apps/frontend/.env` is committed and public: it may hold values that are the same everywhere (e.g. `VITE_APP_TITLE`), but lists environment-specific variables only as commented-out names with a description, never their values:
+  ```
+  # VITE_GOOGLE_WEB_CLIENT_ID=<web OAuth client id>
+  # VITE_VAPID_PUBLIC_KEY=<VAPID public key>   # only if Web Push is used
+  ```
+- Declare each variable in `ImportMetaEnv` (`apps/frontend/src/vite-env.d.ts`) as optional (`readonly VITE_X?: string`), so a missing value is a type-level `undefined` the code has to handle. Fall back with `||`, not `??`: a variable left empty (`VITE_X=`) is `''`, not `undefined`.
+- Values only the backend uses (the client ID accepted as the ID token's `aud`, the VAPID private key) are registered as secrets through the runtime package (`wrangler secret put`, locally `.dev.vars`, for `apps/backend-worker`; environment variables, locally `.env`, for `apps/backend-node`; see its `AGENTS.md`), never in committed config such as `wrangler.jsonc` `vars`, so the public repository holds no environment-specific values.
+- The app must still run when a value is unset (e.g. without a client ID, see "Sign in with Google" below).
+- Why: one fewer API, one fewer request at startup, one fewer loading state. The values only change on deploy, so baking them into the build costs nothing.
+- Note: `VITE_*` values are baked into the published build, so anyone can read them. This keeps them out of the repository; it doesn't keep them secret.
+- When adding a value, list every place it must be set (e.g. the client ID: `apps/frontend/.env.local` and the backend secret) under the runtime package's deploy step in `README.md`.
+
+### Sign in with Google and terms consent
+
+When the app uses Sign in with Google, follow this flow. It spans the frontend and the backend; UI details are in `apps/frontend/AGENTS.md`. Record the chosen behavior in `docs/spec.md` ("共通ルール > 同意").
+
+The official Google sign-in button (Google Identity Services) can't be disabled, so don't design the login screen to keep the button disabled until a consent checkbox is ticked. Use this order instead:
+
+1. The welcome screen shows the official Google button, which can be pressed before consenting.
+2. The API verifies the ID token from the sign-in. A registered user whose agreed terms version is current goes straight to the home screen.
+3. An unregistered user gets the consent screen: links to the terms of service and privacy policy, and a consent checkbox. "同意してはじめる" stays disabled until it's ticked.
+4. After consent, call the registration API with the ID token and the terms version agreed to. The user is created only then.
+
+- Consent is recorded on the server, so there's no need to ask for it before the sign-in button is pressed.
+- The terms version (`TERMS_VERSION`) lives in `packages/utils`, so the frontend and the backend read the same value. It's the revision date as a `YYYY-MM-DD` string, so string comparison orders it, and the database stores it as text. Whenever the terms or privacy policy text changes, set it to the revision date.
+- When the terms are revised, a registered user whose stored version is older than `TERMS_VERSION` gets the consent screen again the next time the app is opened, and agreeing calls a re-consent API that updates the stored version. The backend enforces this too: until the user re-consents, it rejects other API calls with a status the frontend maps to the consent screen, so an old client can't skip it.
+- Without a client ID, a development login may stand in for Google, for local development only: the frontend shows it only when `import.meta.env.DEV` is true, and the backend accepts it only when its runtime package enables it explicitly in development (never by default, never in a production build or deploy). The bundled `auth-guard.header.ts` placeholder trusts any `Authorization` header as a user id, so it must never be what a deployed app runs.
 
 <!--VITE PLUS START-->
 
