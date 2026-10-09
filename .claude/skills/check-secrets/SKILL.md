@@ -67,7 +67,9 @@ access to the Worker once deployed — so `vars` may only ever hold values that 
 fully public. Anything actually secret must go through `wrangler secret put` (and locally
 `.dev.vars`, gitignored), never `vars`. When in doubt about a specific value, ask: "would this
 let someone impersonate the app or access an account if leaked?" — if yes, it must not be in
-`vars` or committed anywhere.
+`vars` or committed anywhere. Environment-specific values that aren't secret (client IDs, resource
+IDs, hostnames) don't belong in committed `vars` either: this project treats every repository as
+public (see "Secrets and Environment-Specific Values" in the root `AGENTS.md`).
 
 ### 5. Report
 
@@ -81,25 +83,24 @@ let someone impersonate the app or access an account if leaked?" — if yes, it 
   removing it from future commits doesn't undo the exposure — rewriting already-pushed history is
   itself a destructive operation, so confirm with the user before doing that part.
 
-## Public repositories: also flag account-specific identifiers
+## Also flag account-specific identifiers
 
-If the repository is public (check the project's README/AGENTS.md, or ask), also flag the
-following and ask before letting them be committed or deployed. None of them grants access by
-itself, but a public repo is better off not publishing them:
+Flag the following and ask before letting them be committed or deployed, whether the repository
+is public or private: this project treats every repository as if it were public, so production
+resource IDs live in untracked configuration, never in tracked files. None of them grants access
+by itself, but a clone or a later change of visibility would publish them:
 
 - **Cloudflare Account ID** / **Zone ID**
 - **D1 `database_id`**, **KV namespace `id`**, **R2 `bucket_name`**
 
 These don't match a generic regex (an ID is just a hex string or UUID), so read the real values
-fresh from `apps/backend-worker/wrangler.jsonc` and `npx wrangler whoami`, then grep `<scope>` for
-those literal values. Never write the actual values into this skill file.
-
-For a private repository, these identifiers in `wrangler.jsonc` are normal and don't need flagging.
+fresh from the config the deploy uses (`wrangler.jsonc` or its untracked override) and
+`npx wrangler whoami`, then grep `<scope>` for those literal values. Never write the actual values into this skill file.
 
 ## Not a secret, but flag it if hardcoded as a default in committed source
 
 - **Google OAuth Client ID** (`NNNNNNNNNN-xxxx.apps.googleusercontent.com`) — not secret by design
-  (it ships in client-side JS), so it's fine in an env var or `wrangler.jsonc` `vars`. What to
+  (it ships in client-side JS), so it's fine in an untracked env var or secret. What to
   catch is a real Client ID hardcoded as a fallback default in source (`value ?? 'real-id'`),
   which would make every fork/clone silently use the original author's Google Cloud project. Grep
   committed source for `apps.googleusercontent.com`; the fix is removing the default (require the

@@ -7,23 +7,6 @@
 - API access goes through a Hono RPC client (`hc<AppType>()`), built from a type-only import of `apps/backend`'s `AppType`. This gives full request/response type inference without a shared types package or manually written DTOs. The API is same-origin under `/api` (client base `/`, so routes are `apiClient.api.*`); in dev, `vite.config.ts` proxies `/api` to the backend dev server on `localhost:8787`.
 - TypeScript is pinned to `^6.x` here, independent of the workspace catalog's `^7.x`: `vue-tsc`/Vue Language Tools can't type-check `.vue` SFCs against TypeScript 7's native compiler yet (no public Program API). Re-sync to the catalog once vue-tsc supports it.
 
-## Sign in with Google and the terms
-
-These apply when the app uses Sign in with Google; the overall flow (consent, terms version, development login) is in the root `AGENTS.md`.
-
-- Only when `VITE_GOOGLE_WEB_CLIENT_ID` is unset, show a disabled `v-btn` that looks like the official Google button in its place. The official button is `size: large`, `shape: pill`, 40px high and at most 400px wide.
-- Links from the consent screen to the terms of service and privacy policy open in a new tab. Opening them in the same tab loses the signed-in state (the ID token).
-- The terms and privacy policy text (e.g. `src/legal/documents.ts`) is a draft the operator checks for legal issues themselves. Don't write the operator's name and contact email into it; embed them from `VITE_OPERATOR_NAME` / `VITE_CONTACT_EMAIL` (set in `.env.local`, described in `.env` as in the root `AGENTS.md`), falling back to placeholders:
-  ```ts
-  const OPERATOR = import.meta.env.VITE_OPERATOR_NAME || '（運営者名）'
-  const CONTACT = import.meta.env.VITE_CONTACT_EMAIL || '（お問い合わせ先）'
-  ```
-  `.env` describes them as:
-  ```
-  # VITE_OPERATOR_NAME / VITE_CONTACT_EMAIL: 利用規約・プライバシーポリシーに表示する運営者名と問い合わせ先。
-  # デプロイ前に .env.local で設定する。未設定のときは仮の表示になる。
-  ```
-
 ## State
 
 State is split by kind — don't reach for Pinia as a catch-all:

@@ -2,56 +2,62 @@
 
 ## Project Structure
 
-Monorepo managed with pnpm workspaces (`apps/*`, `packages/*`). Project-specific conventions live in that project's own `AGENTS.md`, not here — read it before working in that folder.
+Monorepo managed with pnpm workspaces (`apps/*`, `packages/*`). Project-specific conventions live in that project's own `AGENTS.md`, not here — read it before working in that folder. Where the two disagree, the project's own `AGENTS.md` wins inside that folder.
+
+Not every repository has every entry below. Work with the ones that exist, and don't create a missing package just because it's listed here.
 
 - `apps/backend` — API server (Hono): runtime-agnostic routes and business logic, no entrypoint. See `apps/backend/AGENTS.md`.
 - `apps/backend-worker` — Runs `apps/backend` on Cloudflare Workers. See `apps/backend-worker/AGENTS.md`.
 - `apps/backend-node` — Runs `apps/backend` as a standalone Node.js server. See `apps/backend-node/AGENTS.md`.
 - `apps/frontend` — Web client (Vue 3 + Vuetify 4). See `apps/frontend/AGENTS.md`.
-- `packages/utils` — Shared runtime utilities (app-wide limits, date/time helpers, character counting, logger). See `packages/utils/AGENTS.md`.
-- `docs/spec.md` — App specification (features, permissions, limits, architecture, data model). Read it before implementing or changing behavior, and keep it in sync when the behavior changes.
+- `packages/utils` — Shared runtime utilities (e.g. date/time helpers, logger, app-wide limits, character counting). See `packages/utils/AGENTS.md`.
+- `docs/spec.md` — App specification (features, permissions, limits, architecture, data model). When it exists, read it before implementing or changing behavior, and keep it in sync when the behavior changes.
 
 ## Conventions
 
 - Co-location: `foo/bar.ts` + `foo/bar.test.ts`.
-- Arrow functions everywhere (`const foo = (...) => {}`), no `function` declarations — one style repo-wide, including `packages/utils`, so there's no per-case judgment call.
-- Favor less code: reach for a framework's built-in feature over a hand-rolled one, avoid speculative abstractions and shared packages "just in case", and don't introduce a layer until it earns its keep.
-- One origin in development and production: the frontend at `/`, the API at `/api`. In development `vp run frontend#dev` proxies `/api` to the backend dev server (`localhost:8787`); in production the runtime package serves both (see its `AGENTS.md`).
-- API request/response types are not hand-shared: `apps/frontend` gets them from `apps/backend` via Hono RPC, not from a separate types package.
+- Arrow functions everywhere (`const foo = (...) => {}`), no `function` declarations, including `packages/utils`.
+- Favor less code: prefer a framework's built-in feature over a hand-rolled one, and add no abstraction, layer or shared package "just in case".
+- Runtime packages (`apps/backend-*`) are thin entrypoints; routes and business logic go in `apps/backend`.
+- One origin: the frontend at `/`, the API at `/api`. In development the frontend's Vite dev server proxies `/api` to the backend; in production the runtime package serves both.
+- `apps/frontend` gets API request/response types from `apps/backend` via Hono RPC, not from a hand-written types package.
 - Runtime-agnostic shared code goes in `packages/utils`, not duplicated per app.
-- Committing goes through the `github-committer` agent. When delegating to it, include in the task prompt the `Co-Authored-By:` trailer line from your own attribution reminder, verbatim, so the commit credits the model the user is working with rather than the subagent's.
+- Auth: never deploy the placeholder `auth-guard.header.ts`. A development login, if any, works only in development: the frontend shows it only when `import.meta.env.DEV` is true, and the backend accepts it only when its runtime package enables it explicitly (never by default).
 
 ### Public config values for the frontend
 
-Values that aren't secret but differ per environment (e.g. a Google OAuth web client ID, a VAPID public key, the operator's name in the terms) reach the frontend as build-time env vars (`import.meta.env.VITE_*`). Don't add an API that returns config values (e.g. `GET /api/config`).
+Values that aren't secret but differ per environment (e.g. a VAPID public key) reach the frontend as build-time env vars (`import.meta.env.VITE_*`), not through an API (e.g. `GET /api/config`).
 
-- Put environment-specific values in `apps/frontend/.env.local` (gitignored). `apps/frontend/.env` is committed and public: it may hold values that are the same everywhere (e.g. `VITE_APP_TITLE`), but lists environment-specific variables only as commented-out names with a description, never their values:
+- Put them in `apps/frontend/.env.local` (gitignored). The committed `apps/frontend/.env` holds only values that are the same everywhere (e.g. `VITE_APP_TITLE`) and lists the others as commented-out names with a description:
   ```
-  # VITE_GOOGLE_WEB_CLIENT_ID=<web OAuth client id>
   # VITE_VAPID_PUBLIC_KEY=<VAPID public key>   # only if Web Push is used
   ```
-- Declare each variable in `ImportMetaEnv` (`apps/frontend/src/vite-env.d.ts`) as optional (`readonly VITE_X?: string`), so a missing value is a type-level `undefined` the code has to handle. Fall back with `||`, not `??`: a variable left empty (`VITE_X=`) is `''`, not `undefined`.
-- Values only the backend uses (the client ID accepted as the ID token's `aud`, the VAPID private key) are registered as secrets through the runtime package (`wrangler secret put`, locally `.dev.vars`, for `apps/backend-worker`; environment variables, locally `.env`, for `apps/backend-node`; see its `AGENTS.md`), never in committed config such as `wrangler.jsonc` `vars`, so the public repository holds no environment-specific values.
-- The app must still run when a value is unset (e.g. without a client ID, see "Sign in with Google" below).
-- Why: one fewer API, one fewer request at startup, one fewer loading state. The values only change on deploy, so baking them into the build costs nothing.
-- Note: `VITE_*` values are baked into the published build, so anyone can read them. This keeps them out of the repository; it doesn't keep them secret.
-- When adding a value, list every place it must be set (e.g. the client ID: `apps/frontend/.env.local` and the backend secret) under the runtime package's deploy step in `README.md`.
+- Declare each in `ImportMetaEnv` (`apps/frontend/src/vite-env.d.ts`) as optional (`readonly VITE_X?: string`). Fall back with `||`, not `??`: an empty variable (`VITE_X=`) is `''`.
+- Values only the backend uses (e.g. the VAPID private key) are secrets of the runtime package (see its `AGENTS.md`), never in committed config such as `wrangler.jsonc` `vars`.
+- The app must still run when a value is unset, falling back to a placeholder or a disabled feature.
+- When adding a value, list every place it must be set under the runtime package's deploy step in `README.md`.
 
-### Sign in with Google and terms consent
+## Secrets and Environment-Specific Values
 
-When the app uses Sign in with Google, follow this flow. It spans the frontend and the backend; UI details are in `apps/frontend/AGENTS.md`. Record the chosen behavior in `docs/spec.md` ("共通ルール > 同意").
+These apply to every app built from this template, public or internal.
 
-The official Google sign-in button (Google Identity Services) can't be disabled, so don't design the login screen to keep the button disabled until a consent checkbox is ticked. Use this order instead:
+- Treat the repository as public, even when it's private: no credentials and no environment-specific values (e.g. client IDs, Cloudflare D1/KV/R2 IDs) in tracked files, not even to fix a failing build or deploy. Keep them in untracked configuration or the runtime's secret store.
+- Anyone who can open the app can read the frontend build, `VITE_*` values included.
+- Deploy only the build output. Never ship `.env*` files, `.dev.vars`, local databases, or source maps to a reachable location.
 
-1. The welcome screen shows the official Google button, which can be pressed before consenting.
-2. The API verifies the ID token from the sign-in. A registered user whose agreed terms version is current goes straight to the home screen.
-3. An unregistered user gets the consent screen: links to the terms of service and privacy policy, and a consent checkbox. "同意してはじめる" stays disabled until it's ticked.
-4. After consent, call the registration API with the ID token and the terms version agreed to. The user is created only then.
+## Commit, Push, and Deployment Rules
 
-- Consent is recorded on the server, so there's no need to ask for it before the sign-in button is pressed.
-- The terms version (`TERMS_VERSION`) lives in `packages/utils`, so the frontend and the backend read the same value. It's the revision date as a `YYYY-MM-DD` string, so string comparison orders it, and the database stores it as text. Whenever the terms or privacy policy text changes, set it to the revision date.
-- When the terms are revised, a registered user whose stored version is older than `TERMS_VERSION` gets the consent screen again the next time the app is opened, and agreeing calls a re-consent API that updates the stored version. The backend enforces this too: until the user re-consents, it rejects other API calls with a status the frontend maps to the consent screen, so an old client can't skip it.
-- Without a client ID, a development login may stand in for Google, for local development only: the frontend shows it only when `import.meta.env.DEV` is true, and the backend accepts it only when its runtime package enables it explicitly in development (never by default, never in a production build or deploy). The bundled `auth-guard.header.ts` placeholder trusts any `Authorization` header as a user id, so it must never be what a deployed app runs.
+These apply to every coding agent, not only Claude Code: follow each referenced file, where it exists, with the tools you have.
+
+- Before committing, pushing, or deploying, read and follow `.claude/skills/check-secrets/SKILL.md`, including its account-specific identifier checks. Run the scan separately for each operation's scope.
+- For commits and pushes, follow `.claude/agents/github-committer.md`. Where you can delegate to the `github-committer` agent, commit through it, and include in the task prompt the `Co-Authored-By:` trailer line from your own attribution instructions, verbatim, so the commit credits the model the user is working with rather than the subagent's.
+- For Cloudflare deployments, follow `.claude/agents/cloudflare-deployer.md`.
+
+## Optional Conventions
+
+Read the matching file before working on the feature. If the file doesn't exist, the app doesn't use the feature — don't add it.
+
+- Public app (Sign in with Google, terms of service, privacy policy, operator details, consent on sign-up): `docs/agents/public-app.md`.
 
 <!--VITE PLUS START-->
 

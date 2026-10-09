@@ -18,8 +18,7 @@ Before running the deploy command, invoke the `check-secrets` skill (via the Ski
 its "Before a deploy" scope for Cloudflare Workers: `apps/backend-worker/wrangler.jsonc` (especially
 `vars` and binding blocks), the freshly built bundle in `apps/backend-worker/dist`, and the
 frontend build in `apps/frontend/dist` (served publicly as static assets). Also run the
-skill's step 3 (secret-shaped tracked files), and its public-repository identifier check if the
-repository is public.
+skill's step 3 (secret-shaped tracked files) and its account-specific identifier check.
 
 If the skill finds anything, **stop immediately and do not deploy**. Report exactly what was found
 and where:

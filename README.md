@@ -70,7 +70,21 @@ git grep -n -i -e backend-worker -e wrangler -e workerd -- ':!README.md' ':!.cla
 
 (`.claude/skills/check-secrets` and `.claude/agents/web-security-auditor.md` cover both runtimes conditionally, so they stay either way.)
 
-4. Rename the project and set its time zone:
+4. Decide whether the app is public or internal. A public app (offered to anyone, with Sign in
+   with Google, terms of service, a privacy policy and the operator's details) keeps
+   `docs/agents/public-app.md`. For an internal app, delete it:
+
+```bash
+rm docs/agents/public-app.md                      # PowerShell: Remove-Item docs/agents/public-app.md
+```
+
+- Root `AGENTS.md` — remove the `docs/agents/public-app.md` line under "Optional Conventions"
+- `docs/spec.md` — remove the "同意" item under "共通ルール" if the app asks for no consent
+
+The rules shared by both (no secrets or environment-specific values in the repository, the
+secret scan before every commit, push and deploy) stay in the root `AGENTS.md` either way.
+
+5. Rename the project and set its time zone:
 
 - Root `package.json` — `name`
 - `packages/utils/src/date/zone.ts` — `TIME_ZONE_OFFSET_MINUTES` if the app's time zone isn't JST (UTC+9)
@@ -84,14 +98,14 @@ Then check nothing still refers to the template:
 git grep -n -i fullstack-typescript -- ':!README.md'
 ```
 
-5. Install dependencies and confirm everything works:
+6. Install dependencies and confirm everything works:
 
 ```bash
 vp install
 vp run ready
 ```
 
-6. Commit the result and push to the new remote:
+7. Commit the result and push to the new remote:
 
 ```bash
 git add -A
